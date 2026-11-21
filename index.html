@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام متابعة صلاحية المعدات والتراخيص - HSE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --primary: #0f172a;
+      --accent: #2563eb;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --green: #16a34a;
+      --green-bg: #dcfce7;
+      --orange: #f97316;
+      --orange-bg: #ffedd5;
+      --red: #dc2626;
+      --red-bg: #fee2e2;
+      --gray: #94a3b8;
+    }
+
+    * { box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 40px; }
+
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #fff;
+      padding: 18px 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .header-title h1 { margin: 0; font-size: 1.25rem; font-weight: 800; }
+    .header-title span { font-size: 0.8rem; color: #94a3b8; }
+
+    .btn-refresh {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: 0.2s;
+    }
+    .btn-refresh:hover { background: rgba(255,255,255,0.22); }
+
+    /* مفتاح الألوان */
+    .legend-bar {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+    }
+    .legend-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .legend-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .legend-item { display: flex; align-items: center; gap: 7px; }
+
+    /* اللمبات المضيئة */
+    .lamp {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .lamp.green { background: var(--green); box-shadow: 0 0 8px rgba(22, 163, 74, 0.7); }
+    .lamp.orange { background: var(--orange); box-shadow: 0 0 9px rgba(249, 115, 22, 0.85); animation: pulseOrange 1.6s infinite; }
+    .lamp.red { background: var(--red); box-shadow: 0 0 9px rgba(220, 38, 38, 0.85); animation: pulseRed 1.2s infinite; }
+    .lamp.missing { background: var(--gray); }
+
+    @keyframes pulseOrange {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.18); opacity: 0.75; }
+    }
+    @keyframes pulseRed {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.22); opacity: 0.7; }
+    }
+
+    .container { max-width: 1200px; margin: 24px auto; padding: 0 20px; }
+    .loader { text-align: center; padding: 60px 20px; font-size: 1.1rem; font-weight: 700; color: var(--muted); }
+
+    /* شبكة المشاريع */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 18px;
+    }
+    .project-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+    .project-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent);
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.1);
+    }
+    .lock-icon {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      font-size: 1.1rem;
+      background: #f1f5f9;
+      padding: 4px 8px;
+      border-radius: 8px;
+    }
+    .project-name { font-size: 1.15rem; font-weight: 800; color: var(--primary); margin-bottom: 6px; padding-left: 36px; }
+    .project-total { font-size: 0.9rem; color: var(--muted); margin-bottom: 16px; }
+    .project-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .badge.green { background: var(--green-bg); color: var(--green); }
+    .badge.orange { background: var(--orange-bg); color: var(--orange); }
+    .badge.red { background: var(--red-bg); color: var(--red); }
+
+    /* شاشة تفاصيل المشروع */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      background: #fff;
+      padding: 14px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .btn-back {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .filter-btn {
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: var(--text);
+    }
+    .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .search-input {
+      padding: 7px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      min-width: 220px;
+    }
+
+    /* كروت المعدات */
+    .equipment-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 18px;
+    }
+    .equip-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .equip-header { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 12px; }
+    .equip-type {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent);
+      background: #eff6ff;
+      padding: 2px 8px;
+      border-radius: 6px;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+    .equip-title { font-size: 1.05rem; font-weight: 800; color: var(--primary); margin: 2px 0; }
+    .equip-meta { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+
+    .status-boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+    .status-box {
+      border-radius: 10px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      text-align: center;
+    }
+    .status-box.green { background: #f0fdf4; border-color: #bbf7d0; }
+    .status-box.orange { background: #fff7ed; border-color: #fed7aa; }
+    .status-box.red { background: #fef2f2; border-color: #fecaca; }
+
+    .status-label { font-size: 0.78rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+    .lamp-row { display: flex; align-items: center; justify-content: center; gap: 7px; font-weight: 800; font-size: 0.88rem; }
+    .lamp-row.green { color: var(--green); }
+    .lamp-row.orange { color: var(--orange); }
+    .lamp-row.red { color: var(--red); }
+    .lamp-row.missing { color: var(--muted); }
+
+    .days-remaining { font-size: 0.78rem; font-weight: 700; margin-top: 4px; color: var(--text); }
+    .exp-date-small { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    .links-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+    .doc-link {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-decoration: none;
+      padding: 5px 9px;
+      border-radius: 6px;
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      transition: 0.15s;
+    }
+    .doc-link:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* نافذة الباسورد (Modal) */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+    }
+    .modal-box h3 { margin: 0 0 6px; font-size: 1.15rem; color: var(--primary); }
+    .modal-box p { margin: 0 0 16px; font-size: 0.88rem; color: var(--muted); }
+    .modal-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-size: 1.1rem;
+      text-align: center;
+      font-weight: 800;
+      letter-spacing: 3px;
+      margin-bottom: 10px;
+    }
+    .modal-input:focus { outline: none; border-color: var(--accent); }
+    .modal-error { color: var(--red); font-size: 0.82rem; font-weight: 700; min-height: 20px; margin-bottom: 10px; }
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.92rem;
+    }
+    .modal-btn.confirm { background: var(--accent); color: #fff; }
+    .modal-btn.cancel { background: #e2e8f0; color: var(--text); }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-title">
+      <h1>🏗️ لوحة متابعة صلاحية المعدات ورخص المشغلين</h1>
+      <span id="lastUpdateText">جاري الاتصال بقاعدة البيانات...</span>
+    </div>
+    <button class="btn-refresh" onclick="fetchData()">🔄 تحديث البيانات</button>
+  </div>
+</header>
+
+<!-- مفتاح الألوان -->
+<div class="legend-bar">
+  <div class="legend-inner">
+    <div class="legend-items">
+      <span style="color:#0f172a; font-weight:800;">مفتاح الحالة:</span>
+      <div class="legend-item"><span class="lamp green"></span> سارية (أكثر من <span id="warnDaysLabel">30</span> يوم)</div>
+      <div class="legend-item"><span class="lamp orange"></span> قاربت على الانتهاء (متبقي ≤ <span id="warnDaysLabel2">30</span> يوم)</div>
+      <div class="legend-item"><span class="lamp red"></span> منتهية الصلاحية</div>
+      <div class="legend-item"><span class="lamp missing"></span> غير مسجلة</div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div id="loader" class="loader">⏳ جاري تحميل بيانات المشاريع والمعدات...</div>
+
+  <!-- شاشة 1: المشاريع -->
+  <div id="projectsView" class="hidden">
+    <h2 style="margin-top:0; font-size:1.15rem;">اختر المشروع للدخول (يتطلب كلمة مرور المشروع):</h2>
+    <div id="projectsGrid" class="projects-grid"></div>
+  </div>
+
+  <!-- شاشة 2: معدات المشروع -->
+  <div id="equipmentView" class="hidden">
+    <div class="toolbar">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="btn-back" onclick="showProjects()">⬅ كل المشاريع</button>
+        <h2 id="selectedProjectTitle" style="margin:0; font-size:1.15rem;"></h2>
+      </div>
+      <div class="filters">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 بحث بالاسم، السيريال، الشركة..." oninput="renderEquipment()">
+        <button class="filter-btn active" onclick="setFilter('all', this)">الكل</button>
+        <button class="filter-btn" onclick="setFilter('red', this)">🔴 منتهية</button>
+        <button class="filter-btn" onclick="setFilter('orange', this)">🟠 قربت تنتهي</button>
+        <button class="filter-btn" onclick="setFilter('green', this)">🟢 سارية</button>
+      </div>
+    </div>
+    <div id="equipmentGrid" class="equipment-grid"></div>
+  </div>
+</div>
+
+<!-- نافذة كلمة المرور -->
+<div id="passwordModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h3>🔒 مشروع محمي بكلمة مرور</h3>
+    <p id="modalProjectName">أدخل كلمة المرور الخاصة بالمشروع</p>
+    <input type="password" id="projectPassInput" class="modal-input" placeholder="•••" onkeydown="if(event.key==='Enter') verifyPassword()">
+    <div id="modalErrorMsg" class="modal-error"></div>
+    <div class="modal-actions">
+      <button class="modal-btn confirm" onclick="verifyPassword()">دخول</button>
+      <button class="modal-btn cancel" onclick="closeModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ================= إعدادات الربط وكلمات المرور =================
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzFYoeA7VHWjIi-Wg07G4V0r71hFspq_mzgk2M2HrDEvGhs22y-SWhDoIw9fpok429-/exec';
+
+  // ربط كل مشروع بالباسورد الخاص به (عدّل أسماء المشاريع لتطابق الشيت بالظبط)
+  const PROJECT_PASSWORDS = {
+    'Alstom': '101',
+    'AS2': '102',
+    'EGAT': '103',
+    'YADA': '104',
+    'Open Channel': '105',
+    'Grain Bulk Terminal': '106',
+    'Sokhna Port': '107'
+  };
+  // ==============================================================
+
+  let appData = { projects: [], warningDays: 30 };
+  let currentProject = null;
+  let pendingProject = null;
+  let currentFilter = 'all';
+
+  async function fetchData() {
+    document.getElementById('loader').classList.remove('hidden');
+    document.getElementById('projectsView').classList.add('hidden');
+    document.getElementById('equipmentView').classList.add('hidden');
+
+    try {
+      const response = await fetch(API_URL);
+      const res = await response.json();
+      onDataLoaded(res);
+    } catch (err) {
+      document.getElementById('loader').innerHTML = '❌ تعذر تحميل البيانات. تأكد من تحديث النشر في Apps Script إلى JSON API.';
+      console.error(err);
+    }
+  }
+
+  function onDataLoaded(res) {
+    appData = res;
+    document.getElementById('warnDaysLabel').textContent = res.warningDays || 30;
+    document.getElementById('warnDaysLabel2').textContent = res.warningDays || 30;
+    document.getElementById('lastUpdateText').textContent = 'آخر تحديث: ' + (res.lastUpdated || '');
+    document.getElementById('loader').classList.add('hidden');
+
+    if (currentProject) {
+      const updatedProj = appData.projects.find(p => p.name === currentProject.name);
+      if (updatedProj) {
+        currentProject = updatedProj;
+        renderEquipment();
+        document.getElementById('equipmentView').classList.remove('hidden');
+        return;
+      }
+    }
+    showProjects();
+  }
+
+  function getExpectedPassword(projName, index) {
+    // البحث المباشر أو غير الحساس لحالة الأحرف في جدول الباسوردات
+    const matchedKey = Object.keys(PROJECT_PASSWORDS).find(
+      k => k.trim().toLowerCase() === projName.trim().toLowerCase()
+    );
+    if (matchedKey) return PROJECT_PASSWORDS[matchedKey];
+    // باسورد احتياطي بالترتيب (101, 102, 103...) لو اسم المشروع في الشيت مكتوب بصيغة مختلفة
+    return String(101 + index);
+  }
+
+  function showProjects() {
+    currentProject = null;
+    document.getElementById('equipmentView').classList.add('hidden');
+    document.getElementById('projectsView').classList.remove('hidden');
+
+    const grid = document.getElementById('projectsGrid');
+    grid.innerHTML = '';
+
+    if (!appData.projects || appData.projects.length === 0) {
+      grid.innerHTML = '<p>لا توجد مشاريع مسجلة في الشيت حتى الآن.</p>';
+      return;
+    }
+
+    appData.projects.forEach((proj, idx) => {
+      const isUnlocked = sessionStorage.getItem('unlocked_' + proj.name) === 'true';
+      const card = document.createElement('div');
+      card.className = 'project-card';
+      card.onclick = () => requestProjectAccess(proj, idx);
+      card.innerHTML = `
+        <span class="lock-icon">${isUnlocked ? '🔓' : '🔒'}</span>
+        <div>
+          <div class="project-name">📁 ${proj.name}</div>
+          <div class="project-total">إجمالي المعدات المسجلة: <strong>${proj.total}</strong></div>
+        </div>
+        <div class="project-badges">
+          <span class="badge green"><span class="lamp green" style="width:9px;height:9px;"></span> ${proj.greenCount} سارية</span>
+          <span class="badge orange"><span class="lamp orange" style="width:9px;height:9px;"></span> ${proj.orangeCount} قاربت</span>
+          <span class="badge red"><span class="lamp red" style="width:9px;height:9px;"></span> ${proj.redCount} منتهية</span>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function requestProjectAccess(proj, idx) {
+    if (sessionStorage.getItem('unlocked_' + proj.name) === 'true') {
+      openProject(proj);
+      return;
+    }
+    pendingProject = { proj, idx };
+    document.getElementById('modalProjectName').textContent = 'مشروع: ' + proj.name;
+    document.getElementById('projectPassInput').value = '';
+    document.getElementById('modalErrorMsg').textContent = '';
+    document.getElementById('passwordModal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('projectPassInput').focus(), 100);
+  }
+
+  function closeModal() {
+    pendingProject = null;
+    document.getElementById('passwordModal').classList.add('hidden');
+  }
+
+  function verifyPassword() {
+    if (!pendingProject) return;
+    const entered = document.getElementById('projectPassInput').value.trim();
+    const expected = getExpectedPassword(pendingProject.proj.name, pendingProject.idx);
+
+    if (entered === expected) {
+      sessionStorage.setItem('unlocked_' + pendingProject.proj.name, 'true');
+      const targetProj = pendingProject.proj;
+      closeModal();
+      openProject(targetProj);
+    } else {
+      document.getElementById('modalErrorMsg').textContent = '❌ كلمة المرور غير صحيحة';
+      document.getElementById('projectPassInput').select();
+    }
+  }
+
+  function openProject(proj) {
+    currentProject = proj;
+    currentFilter = 'all';
+    document.getElementById('searchInput').value = '';
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.filter-btn').classList.add('active');
+
+    document.getElementById('selectedProjectTitle').textContent = 'مشروع: ' + proj.name;
+    document.getElementById('projectsView').classList.add('hidden');
+    document.getElementById('equipmentView').classList.remove('hidden');
+    renderEquipment();
+  }
+
+  function setFilter(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderEquipment();
+  }
+
+  function buildStatusHTML(title, info) {
+    let statusText = '';
+    let subText = '';
+
+    if (info.status === 'green') {
+      statusText = 'سارية';
+      subText = `متبقي ${info.daysLeft} يوم`;
+    } else if (info.status === 'orange') {
+      statusText = 'قاربت على الانتهاء';
+      subText = info.daysLeft === 0 ? 'تنتهي اليوم!' : `متبقي ${info.daysLeft} يوم`;
+    } else if (info.status === 'red') {
+      statusText = 'منتهية الصلاحية';
+      subText = `منتهية منذ ${Math.abs(info.daysLeft)} يوم`;
+    } else {
+      statusText = 'غير مسجلة';
+      subText = '-';
+    }
+
+    return `
+      <div class="status-box ${info.status}">
+        <div class="status-label">${title}</div>
+        <div class="lamp-row ${info.status}">
+          <span class="lamp ${info.status}"></span>
+          <span>${statusText}</span>
+        </div>
+        <div class="days-remaining">${subText}</div>
+        <div class="exp-date-small">الانتهاء: ${info.formattedDate}</div>
+      </div>
+    `;
+  }
+
+  function extractFirstUrl(raw) {
+    if (!raw) return '';
+    const match = raw.match(/https?:\/\/[^\s,]+/);
+    return match ? match[0] : '';
+  }
+
+  function renderEquipment() {
+    const grid = document.getElementById('equipmentGrid');
+    grid.innerHTML = '';
+    const query = document.getElementById('searchInput').value.toLowerCase().trim();
+
+    const filtered = currentProject.items.filter(item => {
+      const c = item.calibration.status;
+      const l = item.license.status;
+
+      if (currentFilter === 'red' && c !== 'red' && l !== 'red') return false;
+      if (currentFilter === 'orange' && c !== 'orange' && l !== 'orange') return false;
+      if (currentFilter === 'green' && !(c === 'green' && (l === 'green' || l === 'missing'))) return false;
+
+      if (query) {
+        const hay = `${item.name} ${item.type} ${item.serial} ${item.company} ${item.model} ${item.calibNum}`.toLowerCase();
+        if (!hay.includes(query)) return false;
+      }
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      grid.innerHTML = '<p style="color:#64748b; font-weight:700;">لا توجد معدات مطابقة للبحث أو الفلتر المختار.</p>';
+      return;
+    }
+
+    filtered.forEach(item => {
+      const calibUrl = extractFirstUrl(item.links.calibFile);
+      const licUrl = extractFirstUrl(item.links.licenseFile);
+      const pdfUrl = extractFirstUrl(item.links.pdfReport);
+      const folderUrl = extractFirstUrl(item.links.folder);
+      const qrUrl = extractFirstUrl(item.links.qr);
+
+      let linksHTML = '';
+      if (calibUrl) linksHTML += `<a class="doc-link" href="${calibUrl}" target="_blank">📄 شهادة المعايرة</a>`;
+      if (licUrl) linksHTML += `<a class="doc-link" href="${licUrl}" target="_blank">🪪 رخصة المشغل</a>`;
+      if (pdfUrl) linksHTML += `<a class="doc-link" href="${pdfUrl}" target="_blank">📋 تقرير الفحص PDF</a>`;
+      if (folderUrl) linksHTML += `<a class="doc-link" href="${folderUrl}" target="_blank">📁 فولدر المعدة</a>`;
+      if (qrUrl) linksHTML += `<a class="doc-link" href="${qrUrl}" target="_blank">📱 QR Code</a>`;
+
+      const card = document.createElement('div');
+      card.className = 'equip-card';
+      card.innerHTML = `
+        <div>
+          <div class="equip-header">
+            <span class="equip-type">${item.type || 'معدة'}</span>
+            <div class="equip-title">${item.name}</div>
+            <div class="equip-meta">
+              <strong>السيريال:</strong> ${item.serial} &nbsp;|&nbsp; <strong>الموديل:</strong> ${item.model}<br>
+              <strong>الشركة المالكة:</strong> ${item.company}<br>
+              <strong>رقم شهادة المعايرة:</strong> ${item.calibNum} &nbsp;|&nbsp; <strong>تاريخ الفحص:</strong> ${item.inspDate}
+            </div>
+          </div>
+
+          <div class="status-boxes">
+            ${buildStatusHTML('شهادة المعايرة', item.calibration)}
+            ${buildStatusHTML('رخصة السائق / المشغل', item.license)}
+          </div>
+        </div>
+
+        ${linksHTML ? `<div class="links-row">${linksHTML}</div>` : ''}
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  window.onload = fetchData;
+</script>
+
+</body>
+</html>
