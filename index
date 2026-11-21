@@ -324,7 +324,7 @@
 <header>
   <div class="header-inner">
     <div class="header-title">
-      <h1>🏗️ لوحة متابعة صلاحية المعدات وتراخيص المشغلين</h1>
+      <h1>🏗️ لوحة متابعة صلاحية المعدات ورخص المشغلين</h1>
       <span id="lastUpdateText">جاري الاتصال بقاعدة البيانات...</span>
     </div>
     <button class="btn-refresh" onclick="fetchData()">🔄 تحديث البيانات</button>
